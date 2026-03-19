@@ -1,0 +1,22 @@
+/*
+Theme Name:        SkyCast Weather Dashboard
+Theme URI:         https://your-site.com
+Author:            Your Name
+Author URI:        https://your-site.com
+Description:       A premium glassmorphism weather dashboard theme powered by Open-Meteo free APIs. No API key required. Displays live weather, 24-hour forecast, 7-day forecast, AQI, sun times, UV index, and temperature trend chart.
+Version:           1.0.0
+Requires at least: 5.8
+Tested up to:      6.5
+Requires PHP:      7.4
+License:           GNU General Public License v2 or later
+License URI:       https://www.gnu.org/licenses/gpl-2.0.html
+Tags:              weather, dashboard, dark, full-width-template, custom-background
+Text Domain:       skycast
+*/
+
+/* ─────────────────────────────────────────────
+   This file intentionally left minimal.
+   All dashboard styles are in assets/css/skycast.css
+   WordPress reads this file for theme metadata above.
+───────────────────────────────────────────── */
+body { margin: 0; padding: 0; }

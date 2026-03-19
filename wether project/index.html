@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SkyCast — Premium Weather Dashboard</title>
+  <meta name="description" content="A beautiful, real-time weather dashboard with forecasts, AQI, UV, moon phase, alerts and more." />
+  <meta name="theme-color" content="#0b0f1a" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ── WEATHER ANIMATION LAYER ── -->
+  <canvas id="weatherCanvas"></canvas>
+
+  <!-- ── PARTICLE LAYER ── -->
+  <canvas id="particleCanvas"></canvas>
+
+  <!-- ── ANIMATED ORBS ── -->
+  <div class="bg-orbs">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+  </div>
+
+  <!-- ── ALERT BANNER ── -->
+  <div class="alert-banner" id="alertBanner" style="display:none">
+    <span class="alert-icon">⚠️</span>
+    <span class="alert-text" id="alertText"></span>
+    <button class="alert-close" id="alertClose">✕</button>
+  </div>
+
+  <!-- ── INSTALL BANNER (PWA) ── -->
+  <div class="pwa-banner" id="pwaBanner" style="display:none">
+    <span>📱 Install SkyCast as an app!</span>
+    <button id="pwaInstallBtn">Install</button>
+    <button id="pwaDismiss">✕</button>
+  </div>
+
+  <div class="app-wrapper">
+
+    <!-- ─── HEADER ─── -->
+    <header class="sc-header">
+      <div class="logo">
+        <span class="logo-icon">🌤</span>
+        <span class="logo-text">Sky<strong>Cast</strong></span>
+      </div>
+
+      <div class="search-bar">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="cityInput" placeholder="Search city…" autocomplete="off" />
+        <button class="search-btn" id="searchBtn">Search</button>
+      </div>
+
+      <div class="header-right">
+        <!-- Saved Cities -->
+        <div class="saved-cities-wrap">
+          <button class="icon-btn" id="savedCitiesBtn" title="Saved Cities">⭐</button>
+          <div class="saved-dropdown" id="savedDropdown">
+            <div class="saved-header">
+              <span>Saved Cities</span>
+              <button class="save-current-btn" id="saveCurrentBtn">+ Save Current</button>
+            </div>
+            <ul class="saved-list" id="savedList"></ul>
+            <p class="saved-empty" id="savedEmpty">No saved cities yet.</p>
+          </div>
+        </div>
+
+        <!-- Notifications -->
+        <button class="icon-btn" id="notifBtn" title="Enable Weather Alerts">🔔</button>
+
+        <!-- Language -->
+        <select class="lang-select" id="langSelect">
+          <option value="en">🌐 EN</option>
+          <option value="hi">🇮🇳 HI</option>
+          <option value="te">🏳 TE</option>
+        </select>
+
+        <!-- Theme Toggle -->
+        <button class="icon-btn theme-btn" id="themeBtn" title="Toggle Theme">🌙</button>
+
+        <!-- Unit Toggle -->
+        <button class="unit-toggle" id="unitToggle">°C | °F</button>
+
+        <!-- Clock -->
+        <div class="time-display" id="liveClock"></div>
+      </div>
+    </header>
+
+    <!-- ─── MAIN GRID ─── -->
+    <main class="main-grid">
+
+      <!-- HERO -->
+      <section class="card hero-card" id="heroCard">
+        <div class="hero-top">
+          <div class="city-info">
+            <h1 class="city-name" id="cityName">Loading…</h1>
+            <p class="city-meta" id="cityMeta">—</p>
+          </div>
+          <div class="weather-icon" id="mainIcon">🌍</div>
+        </div>
+        <div class="hero-middle">
+          <div class="temp-main" id="tempMain">--</div>
+          <div class="feels-desc">
+            <p class="feels-like" id="feelsLike">Feels like --</p>
+            <p class="weather-desc" id="weatherDesc">Retrieving data…</p>
+          </div>
+        </div>
+        <div class="hero-stats">
+          <div class="stat"><span class="stat-icon">💧</span><span class="stat-label" data-i18n="humidity">Humidity</span><span class="stat-value" id="humidity">--%</span></div>
+          <div class="stat"><span class="stat-icon">💨</span><span class="stat-label" data-i18n="wind">Wind</span><span class="stat-value" id="wind">-- km/h</span></div>
+          <div class="stat"><span class="stat-icon">👁</span><span class="stat-label" data-i18n="visibility">Visibility</span><span class="stat-value" id="visibility">-- km</span></div>
+          <div class="stat"><span class="stat-icon">🌡</span><span class="stat-label" data-i18n="pressure">Pressure</span><span class="stat-value" id="pressure">-- hPa</span></div>
+        </div>
+      </section>
+
+      <!-- AQI -->
+      <section class="card aqi-card">
+        <h2 class="card-title" data-i18n="airQuality">Air Quality</h2>
+        <div class="aqi-display">
+          <div class="aqi-gauge">
+            <svg viewBox="0 0 120 70" class="gauge-svg">
+              <path d="M10,65 A55,55 0 0,1 110,65" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="12" stroke-linecap="round"/>
+              <path id="gaugeFill" d="M10,65 A55,55 0 0,1 110,65" fill="none" stroke="url(#aqiGrad)" stroke-width="12" stroke-linecap="round"
+                stroke-dasharray="173" stroke-dashoffset="173"/>
+              <defs>
+                <linearGradient id="aqiGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stop-color="#4ade80"/>
+                  <stop offset="50%" stop-color="#facc15"/>
+                  <stop offset="100%" stop-color="#f87171"/>
+                </linearGradient>
+              </defs>
+            </svg>
+            <div class="aqi-value" id="aqiValue">--</div>
+            <div class="aqi-label" id="aqiLabel">--</div>
+          </div>
+        </div>
+        <div class="aqi-pills">
+          <div class="aqi-pill"><span>PM2.5</span><span id="pm25">--</span></div>
+          <div class="aqi-pill"><span>PM10</span><span id="pm10">--</span></div>
+          <div class="aqi-pill"><span>O₃</span><span id="o3">--</span></div>
+          <div class="aqi-pill"><span>CO</span><span id="co">--</span></div>
+        </div>
+      </section>
+
+      <!-- SUN + MOON -->
+      <section class="card sun-card">
+        <h2 class="card-title" data-i18n="sunMoon">Sun &amp; Moon</h2>
+        <div class="sun-arc-wrap">
+          <svg class="sun-arc-svg" viewBox="0 0 200 110">
+            <path d="M10,100 A90,90 0 0,1 190,100" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="4"/>
+            <path d="M10,100 A90,90 0 0,1 190,100" fill="none" stroke="url(#sunGrad)" stroke-width="4" stroke-dasharray="283"/>
+            <circle id="sunDot" cx="10" cy="100" r="8" fill="#fbbf24" filter="url(#glow)"/>
+            <defs>
+              <linearGradient id="sunGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stop-color="#f97316"/>
+                <stop offset="100%" stop-color="#fbbf24"/>
+              </linearGradient>
+              <filter id="glow">
+                <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+                <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+              </filter>
+            </defs>
+          </svg>
+        </div>
+        <div class="sun-times">
+          <div class="sun-time"><span>🌅</span><span class="st-label" data-i18n="sunrise">Sunrise</span><span class="st-val" id="sunrise">--:--</span></div>
+          <div class="sun-time"><span>🌇</span><span class="st-label" data-i18n="sunset">Sunset</span><span class="st-val" id="sunset">--:--</span></div>
+        </div>
+        <div class="uv-strip">
+          <span class="uv-label">UV</span>
+          <div class="uv-bar-wrap"><div class="uv-bar" id="uvBar"></div></div>
+          <span class="uv-num" id="uvIndex">--</span>
+        </div>
+        <!-- Moon Phase -->
+        <div class="moon-strip">
+          <span class="moon-icon" id="moonIcon">🌕</span>
+          <div class="moon-info">
+            <span class="moon-label" data-i18n="moonPhase">Moon Phase</span>
+            <span class="moon-name" id="moonName">--</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- HOURLY -->
+      <section class="card hourly-card">
+        <h2 class="card-title" data-i18n="hourlyForecast">24-Hour Forecast</h2>
+        <div class="hourly-scroll" id="hourlyRow"></div>
+      </section>
+
+      <!-- CONDITIONS -->
+      <section class="card mini-stats-card">
+        <h2 class="card-title" data-i18n="conditions">Conditions</h2>
+        <div class="mini-stats-grid">
+          <div class="mini-stat"><div class="ms-icon">🌬</div><div class="ms-data"><span class="ms-label" data-i18n="windDir">Wind Direction</span><span class="ms-val" id="windDir">--</span></div></div>
+          <div class="mini-stat"><div class="ms-icon">💦</div><div class="ms-data"><span class="ms-label" data-i18n="dewPoint">Dew Point</span><span class="ms-val" id="dewPoint">--°</span></div></div>
+          <div class="mini-stat"><div class="ms-icon">☁</div><div class="ms-data"><span class="ms-label" data-i18n="cloudCover">Cloud Cover</span><span class="ms-val" id="cloudCover">--%</span></div></div>
+          <div class="mini-stat"><div class="ms-icon">🌧</div><div class="ms-data"><span class="ms-label" data-i18n="precipitation">Precipitation</span><span class="ms-val" id="precip">-- mm</span></div></div>
+        </div>
+      </section>
+
+      <!-- 7-DAY -->
+      <section class="card weekly-card">
+        <h2 class="card-title" data-i18n="sevenDay">7-Day Forecast</h2>
+        <div class="weekly-list" id="weeklyList"></div>
+      </section>
+
+      <!-- TEMP CHART -->
+      <section class="card chart-card">
+        <h2 class="card-title" data-i18n="tempTrend">Temperature Trend (24h)</h2>
+        <canvas id="tempChart"></canvas>
+      </section>
+
+      <!-- HUMIDITY CHART -->
+      <section class="card chart-card">
+        <h2 class="card-title" data-i18n="humidityTrend">Humidity Trend (24h)</h2>
+        <canvas id="humidityChart"></canvas>
+      </section>
+
+      <!-- WIND CHART -->
+      <section class="card chart-card">
+        <h2 class="card-title" data-i18n="windTrend">Wind Speed Trend (24h)</h2>
+        <canvas id="windChart"></canvas>
+      </section>
+
+      <!-- WEATHER MAP -->
+      <section class="card map-card">
+        <h2 class="card-title" data-i18n="liveMap">🗺 Live Weather Map</h2>
+        <div class="map-tabs">
+          <button class="map-tab active" data-layer="wind">Wind</button>
+          <button class="map-tab" data-layer="rain">Rain</button>
+          <button class="map-tab" data-layer="temp">Temp</button>
+          <button class="map-tab" data-layer="clouds">Clouds</button>
+        </div>
+        <div class="map-wrap">
+          <iframe id="windyFrame" class="windy-frame"
+            src=""
+            frameborder="0"
+            allowfullscreen
+            loading="lazy">
+          </iframe>
+        </div>
+      </section>
+
+    </main>
+
+    <footer class="sc-footer">
+      <p>Weather data via <strong>Open-Meteo</strong> · Map by <strong>Windy.com</strong> · Built with ❤ for your client</p>
+    </footer>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
